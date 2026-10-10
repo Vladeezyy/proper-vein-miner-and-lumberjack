@@ -4,7 +4,8 @@
 set -eu
 cd "$(dirname "$0")/.."
 version=$(grep '^mod.version' stonecutter.properties.toml | sed 's/.*"\(.*\)"/\1/')
-for node in 26.3 26.2 26.1.2 1.21.11 1.21.10 1.21.8 1.21.5 1.21.4 1.21.3 1.21.1; do
+# Oldest first, so the newest Minecraft version ends up as "Latest"
+for node in 1.21.1 1.21.3 1.21.4 1.21.5 1.21.8 1.21.10 1.21.11 26.1.2 26.2 26.3; do
   releases=$(python3 - "$node" <<'PY'
 import re, sys
 text = open("stonecutter.properties.toml").read()
