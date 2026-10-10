@@ -49,10 +49,24 @@ public final class PvmConfig {
         public List<String> excluded_blocks = new ArrayList<>();
     }
 
+    static Path file() {
+        return Platform.configDir().resolve("properveinminer.json");
+    }
+
+    /** Writes the settings (from the settings screen). */
+    public void save() {
+        try {
+            Files.createDirectories(file().getParent());
+            Files.writeString(file(), GSON.toJson(this), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            ProperVeinMiner.LOGGER.warn("Could not write {}", file(), e);
+        }
+    }
+
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
 
     public static PvmConfig load() {
-        Path file = Platform.configDir().resolve("properveinminer.json");
+        Path file = file();
         PvmConfig config = new PvmConfig();
         try {
             if (Files.exists(file)) {

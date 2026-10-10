@@ -158,6 +158,14 @@ public final class SelfTest {
         this.player.setShiftKeyDown(false);
         this.check(this.ores(base) == 9, "sneaking breaks only one ore (left " + this.ores(base) + " of 10)");
 
+        // the player's own switch (the client's key) off: one block only; back on: veins again
+        base = this.ironVein(this.spot());
+        this.hold(new ItemStack(Items.IRON_PICKAXE));
+        PlayerToggles.set(this.player, false, true);
+        this.breakAt(base);
+        PlayerToggles.set(this.player, true, true);
+        this.check(this.ores(base) == 9, "the vein miner switched off by the player's key breaks one ore (left " + this.ores(base) + " of 10)");
+
         // the wrong tool: a wooden pickaxe cannot mine iron, so no vein
         base = this.ironVein(this.spot());
         this.hold(new ItemStack(Items.WOODEN_PICKAXE));
@@ -190,6 +198,15 @@ public final class SelfTest {
         this.hold(new ItemStack(Items.IRON_AXE));
         this.breakAt(base);
         this.check(this.count(base, Blocks.OAK_LOG) == 5, "a log pillar without leaves is not felled (left " + this.count(base, Blocks.OAK_LOG) + " of 6)");
+
+        // the lumberjack switched off by the player's key: one log only
+        base = this.spot();
+        this.tree(base, true);
+        this.hold(new ItemStack(Items.IRON_AXE));
+        PlayerToggles.set(this.player, true, false);
+        this.breakAt(base);
+        PlayerToggles.set(this.player, true, true);
+        this.check(this.count(base, Blocks.OAK_LOG) == 5, "the lumberjack switched off by the player's key cuts one log (left " + this.count(base, Blocks.OAK_LOG) + " of 6)");
 
         // a pickaxe on a tree: no lumberjack
         base = this.spot();

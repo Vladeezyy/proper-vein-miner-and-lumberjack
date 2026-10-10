@@ -15,7 +15,17 @@ It does it the proper way: every extra block is broken exactly as if you had min
 - Deepslate and stone variants of an ore are one vein; the drops gather at the first block.
 - **Server side only**: put it on the server, players need nothing (it works in single player too).
 
-Sneak to break just one block (configurable).
+Sneak to break just one block, or press the key (default `` ` ``) to switch it off and on (configurable).
+
+## Keys and settings
+
+- **`` ` ``** (grave / tilde, change it in Controls under "Proper Vein Miner"): Vein Miner and Lumberjack off / on, to
+  break single blocks. Two more keys, unbound by default: the Vein Miner alone and the Lumberjack alone. The state shows
+  above the hotbar and applies to you only. (Needs the mod on your client too; on Fabric with Fabric API.)
+- **Settings screen**: Mod Menu on Fabric, the Config button in the mod list on NeoForge. Everything in one place: the
+  Vein Miner and the Lumberjack on or off separately, how it is activated, tool protection, gathered drops, most blocks,
+  extra and excluded blocks, and a button to the keys. On a dedicated server the server's `config/properveinminer.json`
+  decides.
 
 ## Downloads
 
@@ -32,7 +42,8 @@ Sneak to break just one block (configurable).
 | 1.21.2 – 1.21.3 | ✔ | ✔ |
 | 1.21 – 1.21.1 | ✔ | ✔ |
 
-Fabric API is not needed.
+Fabric API and Mod Menu are optional (the keys need Fabric API, the settings button needs Mod Menu).
+Languages: English, Russian, Ukrainian, Spanish, Portuguese, Polish, German, French, Korean, Chinese, Arabic.
 
 ## What counts
 
@@ -60,13 +71,15 @@ Fabric API is not needed.
 
 ## Building
 
-JDK 21 (Gradle downloads Java 25 for the 26.x versions itself):
+Run Gradle on JDK 25 (Loom needs it; the 1.21 versions are still built for Java 21):
 
 ```
-./gradlew chiseledBuild
+./gradlew buildAndCollect
 ```
 
-Every version's jars land in `build/libs/<version>/`. The code is one source for all versions, with
+Every version's jars land in `build/libs/<mod version>/`. `tools/selftest.sh` runs a self-test on a real server of
+every version (a fake player mines veins and trees and the results are checked), `tools/clientcheck.sh` opens the
+settings screen on every client. The code is one source for all versions, with
 [Stonecutter](https://stonecutter.kikugie.dev/) comments where they differ.
 
 ## License

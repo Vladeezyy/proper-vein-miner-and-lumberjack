@@ -45,6 +45,8 @@ neoForge {
         register("client") {
             gameDirectory = rootProject.file("run/${sc.current.project}")
             client()
+            // ./gradlew :<version>-neoforge:runClient -Pscreenshots: the client check (settings screen, keys)
+            if (project.hasProperty("screenshots")) systemProperty("pvm.screenshots", "true")
         }
 
         register("server") {
@@ -79,6 +81,8 @@ tasks {
             register("name", sc.properties["mod.name"])
             register("version", sc.properties["mod.version"])
             register("minecraft", sc.properties["mod.mc_compat"])
+            // NeoForge 26.2 deprecated logoFile (a warning screen at start-up) for iconFile
+            register("logo_key", if (sc.current.parsed >= "26.2") "iconFile" else "logoFile")
         }
 
         filesMatching("META-INF/neoforge.mods.toml") { expand(props) }

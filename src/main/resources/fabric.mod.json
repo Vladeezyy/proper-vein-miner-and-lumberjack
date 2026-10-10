@@ -14,7 +14,9 @@
   "icon": "assets/properveinminer/icon.png",
   "environment": "*",
   "entrypoints": {
-    "main": ["io.github.vladeezyy.properveinminer.ProperVeinMinerFabric"]
+    "main": ["io.github.vladeezyy.properveinminer.ProperVeinMinerFabric"],
+    "client": ["io.github.vladeezyy.properveinminer.ProperVeinMinerFabricClient"],
+    "modmenu": ["io.github.vladeezyy.properveinminer.ModMenuIntegration"]
   },
   "mixins": ["properveinminer.mixins.json"],
   "accessWidener": "properveinminer.ct",
@@ -22,7 +24,10 @@
     "fabricloader": ">=${loader}",
     "minecraft": "${minecraft}"
   },
-  "suggests": {
+  "recommends": {
     "fabric-api": "*"
+  },
+  "suggests": {
+    "modmenu": "*"
   }
 }

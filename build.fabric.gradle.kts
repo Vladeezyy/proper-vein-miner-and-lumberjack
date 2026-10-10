@@ -30,6 +30,7 @@ repositories {
     }
     strictMaven("https://www.cursemaven.com", "CurseForge", "curse.maven")
     strictMaven("https://api.modrinth.com/maven", "Modrinth", "maven.modrinth")
+    strictMaven("https://maven.terraformersmc.com/releases", "TerraformersMC", "com.terraformersmc")
 }
 
 dependencies {
@@ -47,8 +48,15 @@ dependencies {
 
     // Use `mod{dependency type}` even on 26.1+ - loom-back-compat converts them
     modImplementation("net.fabricmc:fabric-loader:${property("deps.fabric_loader")}")
-    // only the self-test (dev, -Dpvm.selftest) uses Fabric API: the mod itself runs without it
-    fapi("fabric-lifecycle-events-v1", "fabric-events-interaction-v0", "fabric-convention-tags-v2", "fabric-resource-loader-v0")
+    // Fabric API is optional for players: the keys need networking, key binding and lifecycle events; the self-test
+    // (dev, -Dpvm.selftest) the fake player
+    // (26.1 renamed the key binding module to key mapping)
+    val keys = if (sc.current.parsed >= "26.1") "fabric-key-mapping-api-v1" else "fabric-key-binding-api-v1"
+    fapi("fabric-lifecycle-events-v1", "fabric-events-interaction-v0", "fabric-convention-tags-v2", "fabric-networking-api-v1", keys)
+    // the whole Fabric API in the dev runs, as players have it (mod assets, convention tags)
+    modLocalRuntime("net.fabricmc.fabric-api:fabric-api:${property("deps.fabric_api")}")
+    // the settings button in Mod Menu (optional for players)
+    modCompileOnly("com.terraformersmc:modmenu:${property("deps.modmenu")}") { isTransitive = false }
 }
 
 loom {
@@ -70,6 +78,13 @@ loom {
         jvmArguments.add("-Dmixin.debug.export=true") // Exports transformed classes for debugging
         // ./gradlew :<version>-fabric:runServer -Pselftest: the self-test, then the server stops
         if (project.hasProperty("selftest")) jvmArguments.add("-Dpvm.selftest=true")
+        // ./gradlew :<version>-fabric:runClient -Pscreenshots: the client check (settings screen, keys)
+        if (project.hasProperty("screenshots")) jvmArguments.add("-Dpvm.screenshots=true")
+        // ./gradlew :1.21.11-fabric:runClient -Pgallery: the mod page pictures (GalleryScene, world saves/pvm_gallery)
+        if (project.hasProperty("gallery") && name == "client") {
+            jvmArguments.add("-Dpvm.gallery=true")
+            programArgs("--quickPlaySingleplayer", "pvm_gallery")
+        }
     }
 }
 

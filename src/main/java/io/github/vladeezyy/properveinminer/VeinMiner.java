@@ -100,10 +100,27 @@ public final class VeinMiner {
     }
 
     /** The ore "family" for mixing variants: the c:ores/<name> tag, else the block itself. */
-    private static Optional<Identifier> oreFamily(BlockState state) {
-        return tags(state).map(TagKey::location)
+    /**
+     * The ore "family" for mixing variants: the c:ores/<name> tag, else the name without its stone prefix
+     * (deepslate_iron_ore and iron_ore are both "iron_ore"), so it also works without the conventional tags.
+     */
+    static Optional<String> oreFamily(BlockState state) {
+        Optional<String> tag = tags(state).map(TagKey::location)
                 .filter(l -> l.getNamespace().equals("c") && l.getPath().startsWith("ores/") && !l.getPath().startsWith("ores_in_ground"))
-                .findFirst();
+                .map(Identifier::toString).findFirst();
+        if (tag.isPresent()) {
+            return tag;
+        }
+        String id = id(state.getBlock());
+        String path = id.substring(id.indexOf(':') + 1);
+        for (String prefix : new String[] {"deepslate_", "nether_", "end_", "stone_", "netherrack_", "blackstone_", "basalt_", "granite_", "diorite_",
+                "andesite_", "tuff_", "calcite_"}) {
+            if (path.startsWith(prefix) && path.length() > prefix.length()) {
+                path = path.substring(prefix.length());
+                break;
+            }
+        }
+        return Optional.of("name:" + path);
     }
 
     private static boolean sameOre(BlockState origin, BlockState other) {
@@ -113,8 +130,24 @@ public final class VeinMiner {
         if (!ProperVeinMiner.config().ores.mix_variants || !isOre(other)) {
             return false;
         }
-        Optional<Identifier> family = oreFamily(origin);
-        return family.isPresent() && family.equals(oreFamily(other));
+        Optional<String> a = oreFamily(origin);
+        Optional<String> b = oreFamily(other);
+        if (a.equals(b)) {
+            return true;
+        }
+        // one with the tag, one without (a mod tagging only one variant): compare by name too
+        return nameFamily(origin).equals(nameFamily(other));
+    }
+
+    private static String nameFamily(BlockState state) {
+        String id = id(state.getBlock());
+        String path = id.substring(id.indexOf(':') + 1);
+        for (String prefix : new String[] {"deepslate_", "nether_", "end_", "stone_"}) {
+            if (path.startsWith(prefix)) {
+                return path.substring(prefix.length());
+            }
+        }
+        return path;
     }
 
     /**
@@ -154,10 +187,10 @@ public final class VeinMiner {
         }
         PvmConfig config = ProperVeinMiner.config();
         ItemStack tool = player.getMainHandItem();
-        if (config.ores.enabled && isOre(state) && rightTool(Kind.ORE, tool, state)) {
+        if (config.ores.enabled && PlayerToggles.ores(player) && isOre(state) && rightTool(Kind.ORE, tool, state)) {
             return Kind.ORE;
         }
-        if (config.trees.enabled && isLog(state) && rightTool(Kind.TREE, tool, state)) {
+        if (config.trees.enabled && PlayerToggles.trees(player) && isLog(state) && rightTool(Kind.TREE, tool, state)) {
             return Kind.TREE;
         }
         return null;

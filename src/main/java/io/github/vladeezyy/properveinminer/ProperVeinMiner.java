@@ -25,6 +25,12 @@ public final class ProperVeinMiner {
         return config;
     }
 
+    /** Replaces the settings (the settings screen) and saves them. */
+    public static void apply(PvmConfig changed) {
+        config = changed;
+        changed.save();
+    }
+
     public static Identifier id(String namespace, String path) {
         return Identifier.fromNamespaceAndPath(namespace, path);
     }
