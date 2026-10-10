@@ -1,0 +1,11 @@
+{
+  "required": true,
+  "package": "io.github.vladeezyy.properveinminer.mixin",
+  "compatibilityLevel": "${java}",
+  "mixins": [
+    "ServerPlayerGameModeMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "id": "${id}",
+  "version": "${version}",
+  "name": "${name}",
+  "description": "Mine whole ore veins and fell whole trees in one go, vanilla and modded, with any fitting pickaxe or axe. The tool wears per block, enchantments and drops work as if you mined every block. Server side: players need nothing.",
+  "authors": ["Vladeezyy"],
+  "contact": {
+    "homepage": "https://github.com/Vladeezyy/proper-vein-miner-and-lumberjack",
+    "sources": "https://github.com/Vladeezyy/proper-vein-miner-and-lumberjack",
+    "issues": "https://github.com/Vladeezyy/proper-vein-miner-and-lumberjack/issues"
+  },
+  "license": "MIT",
+  "icon": "assets/properveinminer/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": ["io.github.vladeezyy.properveinminer.ProperVeinMinerFabric"]
+  },
+  "mixins": ["properveinminer.mixins.json"],
+  "accessWidener": "properveinminer.ct",
+  "depends": {
+    "fabricloader": ">=${loader}",
+    "minecraft": "${minecraft}"
+  },
+  "suggests": {
+    "fabric-api": "*"
+  }
+}
