@@ -10,7 +10,7 @@
     "sources": "https://github.com/Vladeezyy/proper-vein-miner-and-lumberjack",
     "issues": "https://github.com/Vladeezyy/proper-vein-miner-and-lumberjack/issues"
   },
-  "license": "MIT",
+  "license": "LGPL-3.0-only",
   "icon": "assets/properveinminer/icon.png",
   "environment": "*",
   "entrypoints": {

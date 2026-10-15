@@ -1,4 +1,4 @@
-license = "MIT"
+license = "LGPL-3.0-only"
 issueTrackerURL = "https://github.com/Vladeezyy/proper-vein-miner-and-lumberjack/issues"
 
 modLoader = "javafml"

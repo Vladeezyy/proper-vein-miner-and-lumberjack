@@ -84,4 +84,4 @@ settings screen on every client. The code is one source for all versions, with
 
 ## License
 
-MIT.
+**LGPL-3.0-only** ([LICENSE](LICENSE), with the GPL-3.0 text in [COPYING](licenses/COPYING)), Copyright (c) 2026 Vladeezyy. Forks and modified versions must stay open under the same license and credit the authors. Please download the mod only from the official release pages. Releases up to the license change were published under MIT.

@@ -127,6 +127,7 @@ tasks {
         val name = project.property("mod.id")
         inputs.property("mod_id", name)
         from("../../LICENSE") { rename { "$it-$name" } }
+        from("../../licenses") { into("licenses/$name") }
     }
 
     register<Copy>("buildAndCollect") {
