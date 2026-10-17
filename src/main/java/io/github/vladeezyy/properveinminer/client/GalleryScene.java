@@ -53,12 +53,22 @@ public final class GalleryScene {
         }
     }
 
+    /** Every dropped item and orb on the stage (flowers and grass the stage building knocked off) */
+    private static void clearDrops(ServerLevel level) {
+        var box = new net.minecraft.world.phys.AABB(stage).inflate(40);
+        level.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class, box).forEach(e -> e.discard());
+        level.getEntitiesOfClass(net.minecraft.world.entity.ExperienceOrb.class, box).forEach(e -> e.discard());
+    }
+
+    /** The cut face of a hill: deepslate below, stone above, dirt and grass on top, stepping back like a slope */
     private static void oreWall(ServerLevel level) {
         BlockPos wall = stage.offset(7, 0, 0);
-        for (int dz = -5; dz <= 5; dz++) {
-            for (int dy = 0; dy < 7; dy++) {
-                for (int dx = 0; dx < 3; dx++) {
-                    set(level, wall.offset(dx, dy, dz), dy < 2 ? Blocks.DEEPSLATE : Blocks.STONE);
+        for (int dz = -9; dz <= 9; dz++) {
+            for (int dx = 0; dx < 8; dx++) {
+                int height = 9 + dx + (Math.abs(dz) > 6 ? -1 : 0);
+                for (int dy = 0; dy < height; dy++) {
+                    Block block = dy < 2 ? Blocks.DEEPSLATE : dy < height - 2 ? Blocks.STONE : dy < height - 1 ? Blocks.DIRT : Blocks.GRASS_BLOCK;
+                    set(level, wall.offset(dx, dy, dz), block);
                 }
             }
         }
@@ -97,12 +107,13 @@ public final class GalleryScene {
                 p.connection.teleport(stage.getX() - 2.5, stage.getY(), stage.getZ() + 0.5, -90.0F, -6.0F);
             });
             case 45 -> mc.options.hideGui = true;
+            case 95 -> server(mc, p -> clearDrops((ServerLevel) p.level()));
             case 100 -> shot(mc, "vein_before");
             case 105 -> server(mc, p -> p.gameMode.destroyBlock(firstOre));
             case 125 -> shot(mc, "vein_after");
             case 130 -> server(mc, p -> {
                 ServerLevel level = (ServerLevel) p.level();
-                level.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class, new net.minecraft.world.phys.AABB(stage).inflate(30)).forEach(e -> e.discard());
+                clearDrops(level);
                 clear(level);
                 trunk = stage.offset(9, 0, 0);
                 var feature = level.registryAccess().lookupOrThrow(Registries.CONFIGURED_FEATURE).getValueOrThrow(TreeFeatures.FANCY_OAK);
@@ -111,8 +122,9 @@ public final class GalleryScene {
                 }
                 p.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.DIAMOND_AXE));
                 // further back and looking up a little: the whole tree in view
-                p.connection.teleport(stage.getX() - 12.5, stage.getY() + 1, stage.getZ() + 0.5, -90.0F, -16.0F);
+                p.connection.teleport(stage.getX() - 7.5, stage.getY(), stage.getZ() + 0.5, -90.0F, -24.0F);
             });
+            case 185 -> server(mc, p -> clearDrops((ServerLevel) p.level()));
             case 190 -> shot(mc, "tree_before");
             case 195 -> server(mc, p -> p.gameMode.destroyBlock(trunk));
             case 215 -> shot(mc, "tree_after");
