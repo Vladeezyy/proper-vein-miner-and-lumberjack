@@ -43,10 +43,43 @@ public final class VeinMiner {
     /** Set while a vein is being broken, so the extra blocks do not start veins of their own. */
     private static final ThreadLocal<Boolean> BREAKING = ThreadLocal.withInitial(() -> false);
 
+    /** What each block is (ores, logs, ore family), worked out once: names and tags are not read on every break. */
+    private record Info(boolean ore, boolean log, String family, String name) {}
+
+    private static final java.util.Map<Block, Info> INFO = new java.util.IdentityHashMap<>();
+    /** Bumped when the config or the tags change; the server thread then drops {@link #INFO}. */
+    private static volatile int generation;
+    private static int infoGeneration;
+
     private VeinMiner() {}
+
+    /** The config or the tags changed (any thread). */
+    public static void invalidate() {
+        generation++;
+    }
+
+    private static Info info(BlockState state) {
+        if (infoGeneration != generation) {
+            INFO.clear();
+            infoGeneration = generation;
+        }
+        Block block = state.getBlock();
+        Info info = INFO.get(block);
+        if (info == null) {
+            boolean ore = computeOre(state);
+            info = new Info(ore, computeLog(state), ore ? computeFamily(state) : null, ore ? nameFamily(state) : null);
+            INFO.put(block, info);
+        }
+        return info;
+    }
 
     public static boolean breaking() {
         return BREAKING.get();
+    }
+
+    /** The benchmark's vanilla rounds: blocks broken with the hooks skipped. */
+    static void setBreaking(boolean breaking) {
+        BREAKING.set(breaking);
     }
 
     /** The block tags of a state (26.1 renamed getTags to tags). */
@@ -66,6 +99,10 @@ public final class VeinMiner {
 
     /** An ore: in c:ores or a vanilla *_ores tag, named *_ore (mods that tag nothing), or listed in the config. */
     public static boolean isOre(BlockState state) {
+        return info(state).ore();
+    }
+
+    private static boolean computeOre(BlockState state) {
         PvmConfig.Ores config = ProperVeinMiner.config().ores;
         String id = id(state.getBlock());
         if (config.excluded_blocks.contains(id)) {
@@ -80,6 +117,10 @@ public final class VeinMiner {
 
     /** A log or stem: minecraft:logs, c:logs, or listed in the config. */
     public static boolean isLog(BlockState state) {
+        return info(state).log();
+    }
+
+    private static boolean computeLog(BlockState state) {
         PvmConfig.Trees config = ProperVeinMiner.config().trees;
         String id = id(state.getBlock());
         if (config.excluded_blocks.contains(id)) {
@@ -99,55 +140,46 @@ public final class VeinMiner {
         return !state.hasProperty(LeavesBlock.PERSISTENT) || !state.getValue(LeavesBlock.PERSISTENT);
     }
 
-    /** The ore "family" for mixing variants: the c:ores/<name> tag, else the block itself. */
     /**
      * The ore "family" for mixing variants: the c:ores/<name> tag, else the name without its stone prefix
      * (deepslate_iron_ore and iron_ore are both "iron_ore"), so it also works without the conventional tags.
      */
-    static Optional<String> oreFamily(BlockState state) {
+    private static String computeFamily(BlockState state) {
         Optional<String> tag = tags(state).map(TagKey::location)
                 .filter(l -> l.getNamespace().equals("c") && l.getPath().startsWith("ores/") && !l.getPath().startsWith("ores_in_ground"))
                 .map(Identifier::toString).findFirst();
-        if (tag.isPresent()) {
-            return tag;
-        }
+        return tag.orElseGet(() -> "name:" + nameFamily(state));
+    }
+
+    /** The name without its stone prefix. */
+    private static String nameFamily(BlockState state) {
         String id = id(state.getBlock());
         String path = id.substring(id.indexOf(':') + 1);
         for (String prefix : new String[] {"deepslate_", "nether_", "end_", "stone_", "netherrack_", "blackstone_", "basalt_", "granite_", "diorite_",
                 "andesite_", "tuff_", "calcite_"}) {
             if (path.startsWith(prefix) && path.length() > prefix.length()) {
-                path = path.substring(prefix.length());
-                break;
-            }
-        }
-        return Optional.of("name:" + path);
-    }
-
-    private static boolean sameOre(BlockState origin, BlockState other) {
-        if (other.getBlock() == origin.getBlock()) {
-            return true;
-        }
-        if (!ProperVeinMiner.config().ores.mix_variants || !isOre(other)) {
-            return false;
-        }
-        Optional<String> a = oreFamily(origin);
-        Optional<String> b = oreFamily(other);
-        if (a.equals(b)) {
-            return true;
-        }
-        // one with the tag, one without (a mod tagging only one variant): compare by name too
-        return nameFamily(origin).equals(nameFamily(other));
-    }
-
-    private static String nameFamily(BlockState state) {
-        String id = id(state.getBlock());
-        String path = id.substring(id.indexOf(':') + 1);
-        for (String prefix : new String[] {"deepslate_", "nether_", "end_", "stone_"}) {
-            if (path.startsWith(prefix)) {
                 return path.substring(prefix.length());
             }
         }
         return path;
+    }
+
+    private static boolean sameOre(Block origin, Info originInfo, BlockState other) {
+        if (other.getBlock() == origin) {
+            return true;
+        }
+        if (!ProperVeinMiner.config().ores.mix_variants || other.isAir()) {
+            return false;
+        }
+        Info info = info(other);
+        if (!info.ore()) {
+            return false;
+        }
+        if (info.family().equals(originInfo.family())) {
+            return true;
+        }
+        // one with the tag, one without (a mod tagging only one variant): compare by name too
+        return info.name().equals(originInfo.name());
     }
 
     /**
@@ -171,6 +203,9 @@ public final class VeinMiner {
     private static boolean active(ServerPlayer player) {
         PvmConfig config = ProperVeinMiner.config();
         if (player.isCreative() && !config.in_creative) {
+            return false;
+        }
+        if (!config.fake_players && Platform.isFakePlayer(player)) {
             return false;
         }
         return switch (config.activation) {
@@ -208,6 +243,8 @@ public final class VeinMiner {
         seen.add(origin);
         queue.add(origin);
         boolean leaves = false;
+        Block originBlock = originState.getBlock();
+        Info originInfo = kind == Kind.ORE ? info(originState) : null;
         while (!queue.isEmpty() && found.size() < max) {
             BlockPos pos = queue.poll();
             for (int dx = -1; dx <= 1; dx++) {
@@ -217,13 +254,14 @@ public final class VeinMiner {
                         BlockPos next = pos.offset(dx, dy, dz);
                         if (!seen.add(next) || found.size() >= max || !level.isLoaded(next)) continue;
                         BlockState state = level.getBlockState(next);
+                        if (state.isAir()) continue;
                         if (kind == Kind.TREE) {
                             if (isNaturalLeaves(state)) {
                                 leaves = true;
                                 continue;
                             }
                             if (!isLog(state) || (config.trees.only_upwards && next.getY() < origin.getY())) continue;
-                        } else if (!sameOre(originState, state)) {
+                        } else if (!sameOre(originBlock, originInfo, state)) {
                             continue;
                         }
                         found.add(next);
@@ -292,9 +330,29 @@ public final class VeinMiner {
         }
         AABB box = new AABB(minX - 1, minY - 1, minZ - 1, maxX + 2, maxY + 2, maxZ + 2);
         Vec3 target = Vec3.atCenterOf(origin);
+        // merged into full stacks here: hundreds of single items in one spot would make the game merge them pair by
+        // pair over the next ticks
+        List<ItemEntity> kept = new ArrayList<>();
         for (ItemEntity item : level.getEntitiesOfClass(ItemEntity.class, box, e -> e.tickCount == 0)) {
+            ItemStack stack = item.getItem().copy();
+            for (ItemEntity into : kept) {
+                ItemStack there = into.getItem();
+                int room = there.getMaxStackSize() - there.getCount();
+                if (room > 0 && ItemStack.isSameItemSameComponents(there, stack)) {
+                    int moved = Math.min(room, stack.getCount());
+                    into.setItem(there.copyWithCount(there.getCount() + moved));
+                    stack.shrink(moved);
+                    if (stack.isEmpty()) break;
+                }
+            }
+            if (stack.isEmpty()) {
+                item.discard();
+                continue;
+            }
+            item.setItem(stack);
             item.setPos(target.x, target.y, target.z);
             item.setDeltaMovement(Vec3.ZERO);
+            kept.add(item);
         }
         for (ExperienceOrb orb : level.getEntitiesOfClass(ExperienceOrb.class, box, e -> e.tickCount == 0)) {
             orb.setPos(target.x, target.y, target.z);

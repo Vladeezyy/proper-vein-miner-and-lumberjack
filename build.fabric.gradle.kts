@@ -77,7 +77,9 @@ loom {
         runDirectory = rootProject.file("run/${sc.current.project}")
         jvmArguments.add("-Dmixin.debug.export=true") // Exports transformed classes for debugging
         // ./gradlew :<version>-fabric:runServer -Pselftest: the self-test, then the server stops
-        if (project.hasProperty("selftest")) jvmArguments.add("-Dpvm.selftest=true")
+        if (project.hasProperty("selftest") || project.hasProperty("bench")) jvmArguments.add("-Dpvm.selftest=true")
+        // ./gradlew :<version>-fabric:runServer -Pbench: the server tick benchmark (Bench), then the server stops
+        if (project.hasProperty("bench")) jvmArguments.add("-Dpvm.bench=true")
         // ./gradlew :<version>-fabric:runClient -Pscreenshots: the client check (settings screen, keys)
         if (project.hasProperty("screenshots")) jvmArguments.add("-Dpvm.screenshots=true")
         // ./gradlew :1.21.11-fabric:runClient -Pgallery: the mod page pictures (GalleryScene, world saves/pvm_gallery)

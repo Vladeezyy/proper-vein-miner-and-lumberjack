@@ -53,7 +53,9 @@ neoForge {
             gameDirectory = rootProject.file("run/${sc.current.project}")
             server()
             // ./gradlew :<version>-neoforge:runServer -Pselftest: the self-test, then the server stops
-            if (project.hasProperty("selftest")) systemProperty("pvm.selftest", "true")
+            if (project.hasProperty("selftest") || project.hasProperty("bench")) systemProperty("pvm.selftest", "true")
+            // ./gradlew :<version>-neoforge:runServer -Pbench: the server tick benchmark (Bench), then the server stops
+            if (project.hasProperty("bench")) systemProperty("pvm.bench", "true")
         }
     }
 }

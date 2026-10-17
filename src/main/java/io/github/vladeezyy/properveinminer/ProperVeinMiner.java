@@ -28,6 +28,7 @@ public final class ProperVeinMiner {
     /** Replaces the settings (the settings screen) and saves them. */
     public static void apply(PvmConfig changed) {
         config = changed;
+        VeinMiner.invalidate();
         changed.save();
     }
 

@@ -12,8 +12,19 @@ public class ProperVeinMinerFabric implements ModInitializer {
         if (FabricLoader.getInstance().isModLoaded("fabric-networking-api-v1")) {
             Networking.register();
         }
+        // datapacks can change the ore and log tags on /reload
+        if (FabricLoader.getInstance().isModLoaded("fabric-lifecycle-events-v1")) {
+            Lifecycle.register();
+        }
         if (System.getProperty("pvm.selftest") != null) {
             SelfTestHooks.fabric();
+        }
+    }
+
+    /** Kept apart so Fabric API classes are only loaded when it is there. */
+    static final class Lifecycle {
+        static void register() {
+            net.fabricmc.fabric.api.event.lifecycle.v1.CommonLifecycleEvents.TAGS_LOADED.register((registries, client) -> VeinMiner.invalidate());
         }
     }
 

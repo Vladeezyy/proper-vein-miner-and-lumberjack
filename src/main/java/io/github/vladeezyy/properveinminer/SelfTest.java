@@ -141,6 +141,14 @@ public final class SelfTest {
         this.player.setShiftKeyDown(false);
         PvmConfig config = ProperVeinMiner.config();
 
+        // the test player is a fake player: by default machines breaking blocks as a player get no veins
+        BlockPos base0 = this.ironVein(this.spot());
+        this.hold(new ItemStack(Items.IRON_PICKAXE));
+        config.fake_players = false;
+        this.breakAt(base0);
+        this.check(this.ores(base0) == 9, "a fake player (a machine) breaks one ore only (left " + this.ores(base0) + " of 10)");
+        config.fake_players = true;
+
         // a whole iron vein with an iron pickaxe: every block, 10 durability, 10 raw iron
         BlockPos base = this.ironVein(this.spot());
         ItemStack pick = new ItemStack(Items.IRON_PICKAXE);
@@ -223,5 +231,7 @@ public final class SelfTest {
                 .filter(e -> e.blockPosition().distManhattan(first) > 2).count();
         int gathered = this.drops(first, Items.RAW_IRON);
         this.check(!config.gather_drops || (far == 0 && gathered >= 10), "the drops are gathered at the first block (" + gathered + " there, " + far + " elsewhere)");
+        long stacks = this.level.getEntitiesOfClass(ItemEntity.class, new AABB(first).inflate(16)).stream().filter(e -> e.getItem().is(Items.RAW_IRON)).count();
+        this.check(!config.gather_drops || stacks == 1, "and merged into one stack (" + stacks + " item entities)");
     }
 }

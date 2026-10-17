@@ -20,6 +20,8 @@ public class ProperVeinMinerNeoForge {
                 PlayerToggles.forget(player);
             }
         });
+        // datapacks can change the ore and log tags on /reload
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.TagsUpdatedEvent event) -> VeinMiner.invalidate());
         if (System.getProperty("pvm.selftest") != null) {
             SelfTestHooks.neoforge();
         }

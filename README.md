@@ -60,8 +60,9 @@ Languages: English, Russian, Ukrainian, Spanish, Portuguese, Polish, German, Fre
 |---|---|---|
 | `activation` | `unless_sneaking` | `unless_sneaking`, `while_sneaking` or `always` |
 | `protect_tool` | `true` | stop before the last durability point |
-| `gather_drops` | `true` | drops and experience appear at the first block |
+| `gather_drops` | `true` | drops and experience appear at the first block, merged into full stacks |
 | `in_creative` | `false` | also in creative mode |
+| `fake_players` | `false` | also for machines of other mods that break blocks as a fake player (turtles, block breakers) |
 | `ores.enabled`, `trees.enabled` | `true` | |
 | `ores.max_blocks` / `trees.max_blocks` | `128` / `256` | most blocks at once |
 | `ores.mix_variants` | `true` | deepslate + stone variants are one vein |
@@ -79,7 +80,8 @@ Run Gradle on JDK 25 (Loom needs it; the 1.21 versions are still built for Java 
 
 Every version's jars land in `build/libs/<mod version>/`. `tools/selftest.sh` runs a self-test on a real server of
 every version (a fake player mines veins and trees and the results are checked), `tools/clientcheck.sh` opens the
-settings screen on every client. The code is one source for all versions, with
+settings screen on every client, and `tools/bench.sh` measures the server tick cost against vanilla
+([docs/performance.md](docs/performance.md)). The code is one source for all versions, with
 [Stonecutter](https://stonecutter.kikugie.dev/) comments where they differ.
 
 ## License

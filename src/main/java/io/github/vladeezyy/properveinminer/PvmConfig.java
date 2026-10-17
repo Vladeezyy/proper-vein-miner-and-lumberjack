@@ -24,6 +24,8 @@ public final class PvmConfig {
     public boolean gather_drops = true;
     /** Also in creative mode. */
     public boolean in_creative = false;
+    /** Also for machines of other mods that break blocks as a fake player (turtles, block breakers). */
+    public boolean fake_players = false;
     public Ores ores = new Ores();
     public Trees trees = new Trees();
 
